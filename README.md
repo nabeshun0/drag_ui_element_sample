@@ -1,16 +1,6 @@
 # drag_ui_element_sample
 
-A new Flutter application.
+![2021-03-25 22-24-57 2021-03-25 22_26_17](https://user-images.githubusercontent.com/38596913/112480455-66e9da00-8db9-11eb-9afd-a77cf6eeec1d.gif)
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+[Drag a UI element](https://flutter.dev/docs/cookbook/effects/drag-a-widget)
