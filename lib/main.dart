@@ -6,13 +6,42 @@ void main() {
   ));
 }
 
+/// Page
 class ExampleDragAndDropPage extends StatefulWidget {
   @override
   _ExampleDragAndDropPageState createState() => _ExampleDragAndDropPageState();
 }
 
-class _ExampleDragAndDropPageState extends State<ExampleDragAndDropPage> {
+class _ExampleDragAndDropPageState extends State<ExampleDragAndDropPage>
+    with TickerProviderStateMixin {
+  final List<Customer> _people = [
+    Customer(
+      name: 'Makayla',
+      imageProvider: NetworkImage('https://flutter'
+          '.dev/docs/cookbook/img-files/effects/split-check/Avatar1.jpg'),
+    ),
+    Customer(
+      name: 'Nathan',
+      imageProvider: NetworkImage('https://flutter'
+          '.dev/docs/cookbook/img-files/effects/split-check/Avatar2.jpg'),
+    ),
+    Customer(
+      name: 'Emilio',
+      imageProvider: NetworkImage('https://flutter'
+          '.dev/docs/cookbook/img-files/effects/split-check/Avatar3.jpg'),
+    ),
+  ];
+
   final GlobalKey _draggableKey = GlobalKey();
+
+  void _itemDroppedOnCustomerCart({
+    required Item item,
+    required Customer customer,
+  }) {
+    setState(() {
+      customer.items.add(item);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +77,7 @@ class _ExampleDragAndDropPageState extends State<ExampleDragAndDropPage> {
               Expanded(
                 child: _buildMenuList(),
               ),
-              Container(),
+              _buildPeopleRow(),
             ],
           ),
         ),
@@ -72,7 +101,9 @@ class _ExampleDragAndDropPageState extends State<ExampleDragAndDropPage> {
     );
   }
 
-  Widget _buildMenuItem({required Item item}) {
+  Widget _buildMenuItem({
+    required Item item,
+  }) {
     return LongPressDraggable<Item>(
       data: item,
       dragAnchor: DragAnchor.pointer,
@@ -87,8 +118,137 @@ class _ExampleDragAndDropPageState extends State<ExampleDragAndDropPage> {
       ),
     );
   }
+
+  Widget _buildPeopleRow() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8.0,
+        vertical: 20.0,
+      ),
+      child: Row(
+        children: _people.map(_buildPersonWithDropZone).toList(),
+      ),
+    );
+  }
+
+  Widget _buildPersonWithDropZone(Customer customer) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 6.0,
+        ),
+        child: DragTarget<Item>(
+          builder: (context, candidateItems, rejectedItems) {
+            return CustomerCart(
+              hasItems: customer.items.isNotEmpty,
+              highlighted: candidateItems.isNotEmpty,
+              customer: customer,
+            );
+          },
+          onAccept: (item) {
+            _itemDroppedOnCustomerCart(
+              item: item,
+              customer: customer,
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
 
+/// CustomerCart
+class CustomerCart extends StatelessWidget {
+  CustomerCart({
+    Key? key,
+    required this.customer,
+    this.highlighted = false,
+    this.hasItems = false,
+  }) : super(key: key);
+
+  final Customer customer;
+  final bool highlighted;
+  final bool hasItems;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = highlighted ? Colors.white : Colors.black;
+
+    return Transform.scale(
+      scale: highlighted ? 1.075 : 1.0,
+      child: Material(
+        elevation: highlighted ? 8.0 : 4.0,
+        borderRadius: BorderRadius.circular(22.0),
+        color: highlighted ? const Color(0xFFF64209) : Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12.0,
+            vertical: 24.0,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipOval(
+                child: SizedBox(
+                  width: 46,
+                  height: 46,
+                  child: Image(
+                    image: customer.imageProvider,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(
+                height: 8.0,
+              ),
+              Text(
+                customer.name,
+                style: Theme.of(context).textTheme.subtitle1?.copyWith(
+                      color: textColor,
+                      fontWeight:
+                          hasItems ? FontWeight.normal : FontWeight.bold,
+                    ),
+              ),
+              Visibility(
+                visible: hasItems,
+                maintainState: true,
+                maintainAnimation: true,
+                maintainSize: true,
+                child: Column(
+                  children: [
+                    const SizedBox(
+                      height: 4.0,
+                    ),
+                    Text(
+                      customer.formattedTotalItemPrice,
+                      style: Theme.of(context).textTheme.caption!.copyWith(
+                            color: textColor,
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(
+                      height: 4.0,
+                    ),
+                    Text(
+                      '${customer.items.length} item${customer.items.length != 1 ? 's' : ''}',
+                      style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                            color: textColor,
+                            fontSize: 12.0,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// MenuListItem
 class MenuListItem extends StatelessWidget {
   const MenuListItem({
     Key? key,
@@ -161,6 +321,7 @@ class MenuListItem extends StatelessWidget {
   }
 }
 
+/// DraggingListItem
 class DraggingListItem extends StatelessWidget {
   const DraggingListItem({
     Key? key,
@@ -235,3 +396,21 @@ final List<Item> _items = const [
         '.dev/docs/cookbook/img-files/effects/split-check/Food3.jpg'),
   ),
 ];
+
+class Customer {
+  Customer({
+    required this.name,
+    required this.imageProvider,
+    List<Item>? items,
+  }) : items = items ?? [];
+
+  final String name;
+  final ImageProvider imageProvider;
+  final List<Item> items;
+
+  String get formattedTotalItemPrice {
+    final totalPriceCents =
+        items.fold<int>(0, (prev, item) => prev + item.totalPriceCents);
+    return '\$${(totalPriceCents / 100.0).toStringAsFixed(2)}';
+  }
+}
