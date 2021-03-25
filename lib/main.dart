@@ -12,6 +12,8 @@ class ExampleDragAndDropPage extends StatefulWidget {
 }
 
 class _ExampleDragAndDropPageState extends State<ExampleDragAndDropPage> {
+  final GlobalKey _draggableKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,10 +73,18 @@ class _ExampleDragAndDropPageState extends State<ExampleDragAndDropPage> {
   }
 
   Widget _buildMenuItem({required Item item}) {
-    return MenuListItem(
-      name: item.name,
-      price: item.formattedTotalItemPrice,
-      photoProvider: item.imageProvider,
+    return LongPressDraggable<Item>(
+      data: item,
+      dragAnchor: DragAnchor.pointer,
+      feedback: DraggingListItem(
+        dragKey: _draggableKey,
+        photoProvider: item.imageProvider,
+      ),
+      child: MenuListItem(
+        name: item.name,
+        price: item.formattedTotalItemPrice,
+        photoProvider: item.imageProvider,
+      ),
     );
   }
 }
@@ -145,6 +155,39 @@ class MenuListItem extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class DraggingListItem extends StatelessWidget {
+  const DraggingListItem({
+    Key? key,
+    required this.dragKey,
+    required this.photoProvider,
+  }) : super(key: key);
+
+  final GlobalKey dragKey;
+  final ImageProvider photoProvider;
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionalTranslation(
+      translation: const Offset(-0.5, -0.5),
+      child: ClipRRect(
+        key: dragKey,
+        borderRadius: BorderRadius.circular(12.0),
+        child: SizedBox(
+          height: 150,
+          width: 150,
+          child: Opacity(
+            opacity: 0.85,
+            child: Image(
+              image: photoProvider,
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
       ),
     );
